@@ -248,6 +248,35 @@ echo "Installing ${packages[@]}"
 apt-get -y install --no-install-recommends "${packages[@]}"
 
 
+if "$install_32" && [ $(dpkg --print-architecture) = "amd64" ] ; then
+    # We lift the interpreter out of the .deb instead of installing the package,
+    # because python3.X-minimal is not Multi-Arch: same (it cannot be, it ships
+    # an arch-specific /usr/bin/python3.X), so installing the i386 one would
+    # replace the amd64 python3 stack instead of joining it.
+    echo "Installing 32bit python interpreter"
+
+    python_version=$(python3 -c 'import sys; print("%d.%d" % sys.version_info[:2])')
+
+    tmp=$(mktemp -d)
+    ( cd "$tmp" && apt-get download "python${python_version}-minimal:i386" )
+    dpkg-deb --fsys-tarfile "$tmp"/python${python_version}-minimal_*_i386.deb \
+      | tar -xOf - "./usr/bin/python${python_version}" \
+      > /usr/local/bin/python3-i386
+    chmod 755 /usr/local/bin/python3-i386
+    rm -rf "$tmp"
+
+    # pytest itself needs no separate install: /usr/lib/python3/dist-packages is
+    # on this interpreter's sys.path too and pytest is pure python. A wrapper is
+    # still useful, because meson's PYTEST option takes a program path and so
+    # cannot spell "python3-i386 -m pytest" itself.
+    cat > /usr/local/bin/pytest-i386 <<'PYTEST_I386'
+#! /bin/sh
+exec /usr/local/bin/python3-i386 -m pytest "$@"
+PYTEST_I386
+    chmod 755 /usr/local/bin/pytest-i386
+fi
+
+
 echo "packages installed, performing some rude cleanup"
 
 # Don't need to clean apt package downloads and metadata, they're in a
