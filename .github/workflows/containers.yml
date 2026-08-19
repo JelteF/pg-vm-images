@@ -201,7 +201,7 @@ jobs:
 
       # Backward compat aliases for the current CI name
       - name: Alias ${{matrix.debian_release}} ${{matrix.variant}} as as ci
-        if: ${{ matrix.variant == 'linux-meson-32' }}
+        if: ${{ matrix.variant == 'linux-meson-64' }}
         run: |
           set -x
           podman tag \

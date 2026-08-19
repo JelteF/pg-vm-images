@@ -187,39 +187,20 @@ if "$install_win"; then
     fi
 fi
 
-if "$install_32" && [ $(dpkg --print-architecture) = "amd64" ] ; then
-
-  # Install development packages necessary to target i386 from amd64. Leave
-  # out packages that'd enlarge the image unduly (e.g. llvm-dev).
-  #
-  # Not installing libossp-uuid-dev:i386, systemtap-sdt-dev:i386
-  # they conflict with the amd64 variants
-  dpkg --add-architecture i386
-  apt-get update
-
-  packages+=(
-      gcc-multilib
-
-      libcurl4-openssl-dev:i386
-      libicu-dev:i386
-      libkrb5-*-heimdal:i386
-      libkrb5-dev:i386
-      libldap2-dev:i386
-      liblz4-dev:i386
-      libpam-dev:i386
-      libperl-dev:i386
-      libpython3-dev:i386
-      libreadline-dev:i386
-      libselinux-dev:i386
-      libssl-dev:i386
-      libsystemd-dev:i386
-      liburing-dev:i386
-      libxml2-dev:i386
-      libxslt1-dev:i386
-      libzstd-dev:i386
-      tcl-dev:i386
-      uuid-dev:i386
-  )
+if "$install_32"; then
+    # Even in a 32bit image the GitHub Actions runner mounts its own, 64bit,
+    # nodejs into the container (as /__e/node*/bin/node) and uses it to run
+    # javascript actions like actions/checkout. Without the 64bit runtime
+    # libraries that fails with a rather unhelpful
+    #   exec /__e/node24/bin/node: no such file or directory
+    # The kernel is 64bit either way, so all that's needed are the libraries,
+    # no emulation is involved. These are the biarch packages from the i386
+    # archive, so this doesn't require enabling a foreign dpkg architecture.
+    packages+=(
+        lib64gcc-s1
+        lib64stdc++6
+        libc6-amd64
+    )
 fi
 
 if "$install_doc"; then
