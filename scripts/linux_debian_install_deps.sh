@@ -194,6 +194,9 @@ if "$install_32" && [ $(dpkg --print-architecture) = "amd64" ] ; then
   #
   # Not installing libossp-uuid-dev:i386, systemtap-sdt-dev:i386
   # they conflict with the amd64 variants
+  #
+  # This is only kept for the backward compatible linux-meson-32 image, the
+  # native i386 linux-meson-32-native image is the replacement.
   dpkg --add-architecture i386
   apt-get update
 
@@ -220,6 +223,22 @@ if "$install_32" && [ $(dpkg --print-architecture) = "amd64" ] ; then
       tcl-dev:i386
       uuid-dev:i386
   )
+fi
+
+if "$install_32" && [ $(dpkg --print-architecture) = "i386" ] ; then
+    # Even in a 32bit image the GitHub Actions runner mounts its own, 64bit,
+    # nodejs into the container (as /__e/node*/bin/node) and uses it to run
+    # javascript actions like actions/checkout. Without the 64bit runtime
+    # libraries that fails with a rather unhelpful
+    #   exec /__e/node24/bin/node: no such file or directory
+    # The kernel is 64bit either way, so all that's needed are the libraries,
+    # no emulation is involved. These are the biarch packages from the i386
+    # archive, so this doesn't require enabling a foreign dpkg architecture.
+    packages+=(
+        lib64gcc-s1
+        lib64stdc++6
+        libc6-amd64
+    )
 fi
 
 if "$install_doc"; then

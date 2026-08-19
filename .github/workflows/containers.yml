@@ -4,7 +4,7 @@ on: [push, pull_request]
 
 env:
   CONTAINER: linux_debian_ci
-  CONTAINER_VARIANTS_JSON: '["sanity-check","linux-meson-32","linux-meson-64","linux-autoconf","compiler-warnings"]'
+  CONTAINER_VARIANTS_JSON: '["sanity-check","linux-meson-32","linux-meson-32-native","linux-meson-64","linux-autoconf","compiler-warnings"]'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}

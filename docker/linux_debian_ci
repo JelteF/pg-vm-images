@@ -59,7 +59,13 @@ RUN \
 FROM base AS sanity-check
 
 
-# Image for the linux-meson-32 job
+# Image for the linux-meson-32 job, cross building for i386 from amd64.
+#
+# This is only kept for backward compatibility. Postgres CI uses the
+# linux_debian_<release>_ci alias, which is generated from this image, for all
+# of its Linux jobs. So it needs to stay a superset of the normal image until
+# all branches have switched their 32bit job to linux-meson-32-native, at
+# which point this can be removed.
 FROM normal AS linux-meson-32
 
 RUN \
@@ -68,6 +74,52 @@ RUN \
   \
   /scripts/linux_debian_install_deps.sh \
     --install-32
+
+
+# Native i386 image for the linux-meson-32 job, intended to replace the
+# linux-meson-32 image above once postgres CI has switched to it.
+#
+# Instead of an amd64 image cross building with gcc-multilib and a hand
+# maintained list of :i386 -dev packages, the package list is then simply the
+# same one as for the other jobs, and everything that runs during the tests
+# (python/pytest in particular) is 32bit as a matter of course, rather than
+# something we have to arrange for. It also means the job tests a real i386
+# build, which is what the buildfarm members we care about are doing.
+#
+# The base/normal steps are repeated here rather than shared with the amd64
+# stages above, because a stage's FROM cannot be varied per --target within a
+# single build.
+FROM --platform=linux/386 i386/debian:$DEBIAN_RELEASE AS base-32
+
+LABEL \
+  org.opencontainers.image.source="https://github.com/anarazel/pg-vm-images" \
+  org.opencontainers.image.description="image for running postgres CI"
+
+ENV DEBIAN_FRONTEND=noninteractive
+ENV IMAGE_NAME=$IMAGE_NAME
+ENV IMAGE_DATE=$DATE
+ENV IMAGE_IDENTITY=$IMAGE_NAME-$DATE
+
+COPY /scripts/linux_debian_install_deps.sh \
+  /scripts/update_ipc_run.sh \
+  /scripts/
+
+FROM base-32 AS linux-meson-32-native
+
+RUN \
+  --mount=type=cache,target=/var/cache/apt,sharing=locked \
+  --mount=type=cache,target=/var/lib/apt,sharing=locked \
+  \
+  rm -f /etc/apt/apt.conf.d/docker-clean && \
+  echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' > /etc/apt/apt.conf.d/keep-cache && \
+  \
+  /scripts/linux_debian_install_deps.sh \
+    --install-base && \
+  \
+  MODULE_SIGNATURE_KEYSERVERPORT=80 /scripts/update_ipc_run.sh && \
+  \
+  /scripts/linux_debian_install_deps.sh \
+    --install-normal --install-32
 
 
 # Image for the linux-meson-64 job
