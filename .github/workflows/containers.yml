@@ -39,7 +39,7 @@ jobs:
           # Include the branch name, due to that autmatically everything on a
           # non-main branch will only be used if somebody explicitly changes
           # the image name in the postgres repo.
-          echo "tag_base=ghcr.io/${GITHUB_REPOSITORY}/${GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT"
+          echo "tag_base=ghcr.io/${GITHUB_REPOSITORY,,}/${GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT"
 
           echo "name_base=$CONTAINER" >> "$GITHUB_OUTPUT"
 
