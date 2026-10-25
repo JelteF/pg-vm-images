@@ -212,6 +212,18 @@ jobs:
             --compression-format=zstd --compression-level=10 \
             ${{needs.setup.outputs.tag_base}}/linux_debian_${{matrix.debian_release}}_ci:latest
 
+      - name: Alias ${{matrix.debian_release}} ${{matrix.variant}} as as ci_32
+        if: ${{ matrix.variant == 'linux-meson-32' }}
+        run: |
+          set -x
+          podman tag \
+            ${{needs.setup.outputs.tag_prefix}}/${{matrix.debian_release}}/${{matrix.variant}}:latest \
+            ${{needs.setup.outputs.tag_base}}/linux_debian_${{matrix.debian_release}}_ci_32:latest
+
+          podman image push \
+            --compression-format=zstd --compression-level=10 \
+            ${{needs.setup.outputs.tag_base}}/linux_debian_${{matrix.debian_release}}_ci_32:latest
+
       - name: Alias ${{matrix.debian_release}} ${{matrix.variant}} as as ci_docs
         if: ${{ matrix.variant == 'compiler-warnings' }}
         run: |
