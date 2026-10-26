@@ -4,7 +4,7 @@ on: [push, pull_request]
 
 env:
   CONTAINER: linux_debian_ci
-  CONTAINER_VARIANTS_JSON: '["sanity-check","linux-meson-32","linux-meson-64","linux-autoconf","compiler-warnings"]'
+  CONTAINER_VARIANTS_JSON: '["sanity-check","linux-meson-32","linux-meson-32-native","linux-meson-64","linux-autoconf","compiler-warnings"]'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -201,28 +201,16 @@ jobs:
 
       # Backward compat aliases for the current CI name
       - name: Alias ${{matrix.debian_release}} ${{matrix.variant}} as as ci
-        if: ${{ matrix.variant == 'linux-meson-64' }}
-        run: |
-          set -x
-          podman tag \
-            ${{needs.setup.outputs.tag_prefix}}/${{matrix.debian_release}}/${{matrix.variant}}:latest \
-            ${{needs.setup.outputs.tag_base}}/linux_debian_${{matrix.debian_release}}_ci:latest
-
-          podman image push \
-            --compression-format=zstd --compression-level=10 \
-            ${{needs.setup.outputs.tag_base}}/linux_debian_${{matrix.debian_release}}_ci:latest
-
-      - name: Alias ${{matrix.debian_release}} ${{matrix.variant}} as as ci_32
         if: ${{ matrix.variant == 'linux-meson-32' }}
         run: |
           set -x
           podman tag \
             ${{needs.setup.outputs.tag_prefix}}/${{matrix.debian_release}}/${{matrix.variant}}:latest \
-            ${{needs.setup.outputs.tag_base}}/linux_debian_${{matrix.debian_release}}_ci_32:latest
+            ${{needs.setup.outputs.tag_base}}/linux_debian_${{matrix.debian_release}}_ci:latest
 
           podman image push \
             --compression-format=zstd --compression-level=10 \
-            ${{needs.setup.outputs.tag_base}}/linux_debian_${{matrix.debian_release}}_ci_32:latest
+            ${{needs.setup.outputs.tag_base}}/linux_debian_${{matrix.debian_release}}_ci:latest
 
       - name: Alias ${{matrix.debian_release}} ${{matrix.variant}} as as ci_docs
         if: ${{ matrix.variant == 'compiler-warnings' }}

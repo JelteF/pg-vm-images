@@ -187,7 +187,42 @@ if "$install_win"; then
     fi
 fi
 
-if "$install_32"; then
+if "$install_32" && [ $(dpkg --print-architecture) = "amd64" ] ; then
+
+  # Install development packages necessary to target i386 from amd64. Leave
+  # out packages that'd enlarge the image unduly (e.g. llvm-dev).
+  #
+  # Not installing libossp-uuid-dev:i386, systemtap-sdt-dev:i386
+  # they conflict with the amd64 variants
+  dpkg --add-architecture i386
+  apt-get update
+
+  packages+=(
+      gcc-multilib
+
+      libcurl4-openssl-dev:i386
+      libicu-dev:i386
+      libkrb5-*-heimdal:i386
+      libkrb5-dev:i386
+      libldap2-dev:i386
+      liblz4-dev:i386
+      libpam-dev:i386
+      libperl-dev:i386
+      libpython3-dev:i386
+      libreadline-dev:i386
+      libselinux-dev:i386
+      libssl-dev:i386
+      libsystemd-dev:i386
+      liburing-dev:i386
+      libxml2-dev:i386
+      libxslt1-dev:i386
+      libzstd-dev:i386
+      tcl-dev:i386
+      uuid-dev:i386
+  )
+fi
+
+if "$install_32" && [ $(dpkg --print-architecture) = "i386" ] ; then
     # Even in a 32bit image the GitHub Actions runner mounts its own, 64bit,
     # nodejs into the container (as /__e/node*/bin/node) and uses it to run
     # javascript actions like actions/checkout. Without the 64bit runtime
